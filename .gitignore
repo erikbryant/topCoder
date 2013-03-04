@@ -1,0 +1,15 @@
+a.out
+*.[oa]
+*.h.gch
+.*.swp
+.DS_Store
+perf.data*
+srm_[0-9][0-9][0-9]_div[0-9]_[0-9][0-9][0-9]
+*~
+\#*#
+.\#*
+*.gcda
+*.gcno
+*.gprof
+gmon.out
+*.gcov
