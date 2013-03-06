@@ -17,3 +17,7 @@ clean:
 srm_144_div1_300: srm_144_div1_300.c++
 	$(CPPCHECK) $@.c++
 	$(CC_DEBUG) $^ -o $@
+
+srm_144_div1_550: srm_144_div1_550.c++
+	$(CPPCHECK) $@.c++
+	$(CC_DEBUG) $(C11) $^ -o $@
