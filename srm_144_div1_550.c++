@@ -1,63 +1,121 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include <map>
 #include <list>
-#include <cmath>
 
 using namespace std;
 
 class Lottery
 {
 public:
-  Lottery( void )
-  {
-  }
-  
   vector<string> sortByOdds( const vector<string> rules );
 
 private:
-  unsigned long int odds( int choices, int blanks, bool sorted, bool unique );
-  unsigned long int factorial( int choices, int blanks );
-  pair<unsigned long int, string> parseRecord( const string &ticket );
+  unsigned long long int odds( int choices, int blanks, bool sorted, bool unique );
+  unsigned long long int power( unsigned long long int base, unsigned long long int exponent );
+  unsigned long long int factorial( int n, int stop = 1 );
+  unsigned long long int permutations( int n, int r );
+  unsigned long long int combinations( int n, int r );
+  pair<unsigned long long int, string> parseRecord( const string &ticket );
 };
 
-unsigned long int Lottery::factorial( int choices, int blanks )
+unsigned long long int Lottery::power( unsigned long long int base, unsigned long long int exponent )
 {
-  int i = 0;
-  unsigned long int result = 1;
+  unsigned long long int result = 1;
 
-  for ( i=1; i<=blanks; i++ )
+  while ( exponent != 0 )
+  {
+    result *= base;
+    exponent--;
+  }
+  
+  return result;
+}
+
+//
+// Compute the factorial of a given input.
+// Optionally, stop counting down before a
+// given point. E.g.,
+//
+//   factorial(5)   = 5 * 4 * 3 * 2
+//   factorial(5,3) = 5 * 4
+//
+unsigned long long int Lottery::factorial( int n, int stop )
+{
+  unsigned long long int result = 1;
+
+  for ( ; n>stop; n-- )
     {
-      result *= choices;
-      choices--;
+      result *= n;
     }
 
   return result;
 }
 
-unsigned long int Lottery::odds( int choices, int blanks, bool sorted, bool unique )
+//
+// nPr = n! / (n-r)!
+//     = n * (n-1) * (n-2) * .. * (n-(r-1))
+//
+unsigned long long int Lottery::permutations( int n, int r )
 {
-  unsigned long int combinations = 0;
+  return factorial( n, n-r );
+}
 
-  if ( unique )
+//
+// nCr = n! / r!(n-r)!
+//     = r >= (n-r) : factorial( n, r )   / (n-r)!
+//       r <  (n-r) : factorial( n, n-r ) / r!
+//
+// Note: This can also be written as permutation(n, r) / r!
+//
+unsigned long long int Lottery::combinations( int n, int r )
+{
+  unsigned long long int result = 0;
+
+  if ( r >= (n-r) )
     {
-      combinations = this->factorial( choices, blanks );
+      result = factorial( n, r ) / factorial( n-r );
     }
   else
     {
-      combinations = pow( choices, blanks );
+      result = factorial( n, n-r ) / factorial( r );
     }
+
+  return result;
+}
+
+unsigned long long int Lottery::odds( int choices, int blanks, bool sorted, bool unique )
+{
+  unsigned long long int total = 0;
 
   if ( sorted )
     {
-      combinations -= (pow( choices, blanks ) - choices) / 2;   // TODO: BROKEN! Work out this calculation
+      if ( unique )
+	{
+	  total = this->combinations( choices, blanks );
+	}
+      else
+	{
+	  // This equation copied from: http://codeherb.com/Lottery/
+	  total = factorial( choices + blanks - 1, choices - 1 ) / factorial( blanks );
+	}
+    }
+  else
+    {
+      if ( unique )
+	{
+	  total = this->permutations( choices, blanks );
+	}
+      else
+	{
+	  total = this->power( choices, blanks );
+	}
     }
 
-  return combinations;
+  return total;
 }
 
-pair<unsigned long int, string> Lottery::parseRecord( const string &record )
+pair<unsigned long long int, string> Lottery::parseRecord( const string &record )
 {
   string name;
   string ticket = record;
@@ -65,23 +123,28 @@ pair<unsigned long int, string> Lottery::parseRecord( const string &record )
   int blanks = 0;
   bool sorted = false;
   bool unique = false;
-  unsigned long int combinations = 0;
+  unsigned long long int combinations = 0;
   string::size_type pos = ticket.find( ':', 0 );
 
   name = ticket.substr( 0, pos );
   pos += 2;
   ticket = ticket.substr( pos, ticket.length() );
-  choices = stoi( ticket, &pos );
+  choices = atoi( ticket.c_str() );
+  pos = ticket.find( ' ', 0 ) + 1;
   ticket = ticket.substr( pos, ticket.length() );
-  blanks = stoi( ticket, &pos );
-  pos++;
+  blanks = atoi( ticket.c_str() );
+  pos = ticket.find( ' ', 0 ) + 1;
+  while ( ticket[pos] == ' ' )
+    {
+      pos++;
+    }
   sorted = ticket[pos] == 'T';
   unique = ticket[pos+2] == 'T';
   combinations = odds( choices, blanks, sorted, unique );
 
   cout << name << ": " << choices << " " << blanks << " " << (sorted ? 'T' : 'F') << " " << (unique ? 'T' : 'F') << "  -> " << combinations << endl;
 
-  pair<unsigned long int, string> entry( combinations, name );
+  pair<unsigned long long int, string> entry( combinations, name );
 
   return entry;
 }
@@ -89,18 +152,18 @@ pair<unsigned long int, string> Lottery::parseRecord( const string &record )
 vector<string> Lottery::sortByOdds( const vector<string> rules )
 {
   vector<string> result;
-  list< pair<unsigned long int, string> > games;
+  list< pair<unsigned long long int, string> > games;
   vector<string>::const_iterator it;
 
   for ( it=rules.begin(); it!=rules.end(); it++ )
     {
-      pair<unsigned long int, string> entry = parseRecord( *it );
+      pair<unsigned long long int, string> entry = parseRecord( *it );
       games.push_back( entry );
     }
 
   games.sort();
 
-  list< pair<unsigned long int, string> >::iterator lit;
+  list< pair<unsigned long long int, string> >::iterator lit;
   for ( lit=games.begin(); lit!=games.end(); lit++ )
     {
       result.push_back( (*lit).second );
@@ -147,6 +210,19 @@ int main( int argc, char *argv[] )
 
   cout << endl << "Example 3: " << endl;
   rules.clear();
+  result = lottery.sortByOdds( rules );
+  for ( it=result.begin(); it!=result.end(); it++ )
+    {
+      cout << *it << ", ";
+    }
+  cout << endl;
+
+  cout << endl << "Example 4: " << endl;
+  rules.clear();
+  rules.push_back( "6/49: 49 6 T T" );
+  rules.push_back( "6/49: 49 6 T F" );
+  rules.push_back( "6/49: 49 6 F T" );
+  rules.push_back( "6/49: 49 6 F F" );
   result = lottery.sortByOdds( rules );
   for ( it=result.begin(); it!=result.end(); it++ )
     {

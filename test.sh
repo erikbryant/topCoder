@@ -10,4 +10,5 @@ PROG=$1
 shift
 
 echo "./$PROG $*"
+echo ""
 ./$PROG $*

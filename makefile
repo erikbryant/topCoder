@@ -21,3 +21,7 @@ srm_144_div1_300: srm_144_div1_300.c++
 srm_144_div1_550: srm_144_div1_550.c++
 	$(CPPCHECK) $@.c++
 	$(CC_DEBUG) $(C11) $^ -o $@
+
+srm_144_div1_1100: srm_144_div1_1100.c++
+	$(CPPCHECK) $@.c++
+	$(CC_DEBUG) $(C11) $^ -o $@
